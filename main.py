@@ -3,67 +3,86 @@ import csv
 
 g = Graph("http://localhost:7474/db/data/",auth=("neo4j", ""))
 
-#global variables, hopefully i find a better place :)
-drugNames = []
-diseaseNames = []
-diseaseSynonyms = []
-identifiers = []
-indications = []
+#global variables, hopefully i find a better place for these :)
+
+
 diseaseDict = {}
 drugDict = {}
-matchDict = {}
-
+#matchDict = {}
+matchList = []
 
 
 #zu erklärung : auth=("user_name","")
 
+def matchNames(word):
+    diseaseIden = None
+    if word in diseaseDict:
+        print('AHA. found a match in the diseaseDict: found '+ 'word' + ' in disease '+ str(diseaseIden))
+        diseaseIden = diseaseDict[word]
+    return diseaseIden
+
+def buildResults(drugIdentifier, diseaseIdentifier):
+    print('appending a result to the matchlist')
+    matchList.append((drugIdentifier, diseaseIdentifier))
+    return 0
+
+
 #hier der Aufruf einer query und wie man die Ergebnisse durchläuft.
 
-query = 'MATCH (n:Disease) RETURN n'
+query = 'MATCH (n:Disease) RETURN n LIMIT 500'
 results = g.run(query)
 
 
 # load in disease names first and the match their names while you load in drug indications
 for result, in results:
     name = result['name']
+    identifier = result['identifier']
     synonyms = result['synonyms']
-    #synonymList = synonyms.split()
-    diseaseDict[name] = synonyms
+    #synonymDict = {}
+    if synonyms == None:
+        print('no synonyms found')
+        diseaseDict[name] = {identifier}
+        #synonymDict[identifier] = {name}
+    else:
+        for element in synonyms:
+            print('appending synonyms of ' + str(identifier) + ' to dictionary')
+            diseaseDict[element] = {identifier}
+            #for element in synonyms:
+                #synonymWords = element.split()
+                #synonymDict[identifier] = {}
 
-    #diseaseSynonyms.append(synonyms)
-    #diseaseSynonyms.append(name)
 
-query = 'MATCH (n:Compound) RETURN n'
-#query = 'MATCH (n) WHERE EXISTS(n.name) RETURN DISTINCT "node" as entity, n.name AS name'
-#query = 'MATCH (n) WHERE EXISTS(n.identifier) RETURN DISTINCT "node" as entity, n.identifier AS identifier'
+
+query = 'MATCH (n:Compound) RETURN n Limit 500'
 results = g.run(query)
 
 for result, in results:
     name = result['name']
-    #drugNames.append(name)
+    identifier = result[identifier]
     indication = result['indication']
     if indication == None:
+        print('empty indication')
         indication = "ThisIsADummyString"
-    #print(indication)
-    drugDict[name] = indication.split()
-    indications.append(indication)
-    #identifier = results['identifier']
-    #identifiers.append(identifier)
+        break
+    else:
+        splitIndication = indication.split()
+        for element in splitIndication:
+            print(element)
+            print('looking for word "' + str(element) + '" in list of diseases')
+            diseaseIdentifier = matchNames(element)
+            if diseaseIdentifier != None:
+                buildResults(identifier, diseaseIdentifier)
+
+        #drugDict[identifier] = indication.split()
+        #search here
 
 
 
-merged_list = [(drugNames[i], diseaseNames[i]) for i in range(0, len(diseaseNames))]
 
-def matchNames():
-    for element in drugDict:
-        for synonym in element:
-            print()
-    return 0
 
 
 with open('finalList.csv', 'w', newline='', encoding="utf-8") as csvfile:
     nameWriter = csv.writer(csvfile, delimiter=' ',  quotechar='|', quoting=csv.QUOTE_MINIMAL)
-    for element in merged_list:
-        #print(element)
+    for element in matchList:
         nameWriter.writerow([element])
 #print(drugDict)
