@@ -7,7 +7,9 @@
 # and the BeCAS tagging service for diseases/disorders
 # and pathways identification. source(DrugQuest - a text mining workflow for
 # drug association discovery)
-#HAVE TO APPLY TO BE ABLE TO ACCCESS NOT SURE IF WORKS
+#HAVE TO APPLY TO BE ABLE TO ACCESS NOT SURE IF WORKS
+
+#guck dir noch genauer die indications an, vielleicht gibts da satzstrukturen
 
 #build TABOO list -> check for every word if its in the disease database, if not put in list so next search is more efficient
 

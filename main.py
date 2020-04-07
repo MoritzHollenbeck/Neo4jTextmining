@@ -1,5 +1,6 @@
 from py2neo import Graph
 import csv
+import string
 
 g = Graph("http://localhost:7474/db/data/",auth=("neo4j", ""))
 
@@ -17,8 +18,8 @@ matchList = []
 def matchNames(word):
     diseaseIden = None
     if word in diseaseDict:
-        print('AHA. found a match in the diseaseDict: found '+ 'word' + ' in disease '+ str(diseaseIden))
         diseaseIden = diseaseDict[word]
+        print('AHA. found a match in the diseaseDict: found ' + str(word) + ' in disease ' + str(diseaseIden))
     return diseaseIden
 
 def buildResults(drugIdentifier, diseaseIdentifier):
@@ -29,11 +30,12 @@ def buildResults(drugIdentifier, diseaseIdentifier):
 
 #hier der Aufruf einer query und wie man die Ergebnisse durchläuft.
 
-query = 'MATCH (n:Disease) RETURN n LIMIT 500'
+query = 'MATCH (n:Disease) RETURN n'
 results = g.run(query)
 
 
 # load in disease names first and the match their names while you load in drug indications
+#beim einlesen direkt .lower benutzen
 for result, in results:
     name = result['name']
     identifier = result['identifier']
@@ -45,6 +47,7 @@ for result, in results:
         #synonymDict[identifier] = {name}
     else:
         for element in synonyms:
+            element.lower()
             print('appending synonyms of ' + str(identifier) + ' to dictionary')
             diseaseDict[element] = {identifier}
             #for element in synonyms:
@@ -53,36 +56,28 @@ for result, in results:
 
 
 
-query = 'MATCH (n:Compound) RETURN n Limit 500'
+query = 'MATCH (n:Compound) WHERE EXISTS(n.indication) RETURN n'
 results = g.run(query)
+
+# auch hier lowercase
 
 for result, in results:
     name = result['name']
-    identifier = result[identifier]
-    indication = result['indication']
-    if indication == None:
-        print('empty indication')
-        indication = "ThisIsADummyString"
-        break
-    else:
-        splitIndication = indication.split()
-        for element in splitIndication:
-            print(element)
-            print('looking for word "' + str(element) + '" in list of diseases')
-            diseaseIdentifier = matchNames(element)
-            if diseaseIdentifier != None:
-                buildResults(identifier, diseaseIdentifier)
+    identifier = result['identifier']
+    indication = result['indication'].lower().translate(str.maketrans('', '', string.punctuation))
+
+    splitIndication = indication.split()
+    for element in splitIndication:
+        print('looking for word "' + element + '" in list of diseases')
+        diseaseIdentifier = matchNames(element)
+        if diseaseIdentifier != None:
+            buildResults(identifier, diseaseIdentifier)
 
         #drugDict[identifier] = indication.split()
         #search here
-
-
-
-
-
 
 with open('finalList.csv', 'w', newline='', encoding="utf-8") as csvfile:
     nameWriter = csv.writer(csvfile, delimiter=' ',  quotechar='|', quoting=csv.QUOTE_MINIMAL)
     for element in matchList:
         nameWriter.writerow([element])
-#print(drugDict)
+print(diseaseDict)
