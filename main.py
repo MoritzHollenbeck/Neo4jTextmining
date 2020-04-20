@@ -12,6 +12,7 @@ diseaseDict = {}
 diseaseInden = {}
 drugDict = {}
 #matchDict = {}
+tabooDict = {}
 matchList = []
 searchQuery = []
 lonelyDrug = []
@@ -35,17 +36,20 @@ def matchNames(word):
             word = " ".join(searchQuery[0:diseaseDict[word]+1])
             #word = set(searchQuery[0:diseaseDict[word]+1])
             #for element in synonymDict:
-            if word in synonymDict:
-                #if len(word.difference(set(element.split()))) <= len(element)-2:
-                diseaseIden = synonymDict[word]
-                foundSynonym +=1
+            if word not in tabooDict:
+                if word in synonymDict:
+                    #if len(word.difference(set(element.split()))) <= len(element)-2:
+                    diseaseIden = synonymDict[word]
+                    foundSynonym +=1
+                else:
+                    tabooDict[word] = True
     if diseaseIden is not None:
         print('AHA. found a match in the diseaseDict: found ' + str(word) + ' in disease ' + str(diseaseIden))
         matchFound = True
     return diseaseIden
 
 def buildResults(drugIdentifier, diseaseIdentifier, indication, diseaseName):
-    print('appending a result to the matchlist')
+    #print('appending a result to the matchlist')
     if (drugIdentifier, diseaseIdentifier, diseaseName, indication) not in matchList:
         matchList.append((drugIdentifier, diseaseIdentifier, diseaseName, indication))
     return 0
@@ -73,13 +77,7 @@ for result, in results:
     diseaseInden[identifier] = namesAndSynonyms
     if synonyms is None:
         diseaseDict[name] = identifier
-
     else:
-        #for element in synonyms:
-         #   element.lower()
-          #  print('appending synonyms of ' + str(identifier) + ' to dictionary')
-            # right here i am trying to build a dict which contains others dicts corresponding to the synonym words
-           # diseaseDict[element] = {identifier}
         for element in synonyms:
             diseaseDict[name] = identifier
             element.lower()
@@ -108,7 +106,7 @@ for result, in results:
     for element in splitIndication:
         wordCount += 1
         searchQuery = splitIndication[:wordCount]
-        print('looking for word "' + element + '" in list of diseases')
+        #print('looking for word "' + element + '" in list of diseases')
         diseaseIdentifier = matchNames(element)
         if diseaseIdentifier is not None:
             buildResults(identifier, diseaseIdentifier, indication, diseaseInden[diseaseIdentifier])
@@ -127,6 +125,7 @@ with open('lonelyDrugs.csv', 'w', newline='', encoding="utf-8") as csvfile:
     nameWriter = csv.writer(csvfile, delimiter=' ',  quotechar='|', quoting=csv.QUOTE_MINIMAL)
     for element in lonelyDrug:
         nameWriter.writerow([element])
+
 
 #print(diseaseDict)
 #print(synonymDict)
