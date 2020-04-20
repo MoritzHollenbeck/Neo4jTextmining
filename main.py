@@ -63,10 +63,15 @@ for result, in results:
     name = result['name']
     identifier = result['identifier']
     synonyms = result['synonyms']
-
-    diseaseInden[identifier] = name
-    if synonyms == None:
-        #print('no synonyms found')
+    if synonyms is None:
+        synonymWords = name
+        namesAndSynonyms = name
+    else:
+        synonymWords = synonyms
+        namesAndSynonyms = synonyms[:]
+        namesAndSynonyms.append(name)
+    diseaseInden[identifier] = namesAndSynonyms
+    if synonyms is None:
         diseaseDict[name] = identifier
 
     else:
@@ -108,7 +113,7 @@ for result, in results:
         if diseaseIdentifier is not None:
             buildResults(identifier, diseaseIdentifier, indication, diseaseInden[diseaseIdentifier])
     if not matchFound:
-        lonelyDrug.append(identifier)
+        lonelyDrug.append((identifier, indication))
         #drugDict[identifier] = indication.split()
         #search here
 
