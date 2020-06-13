@@ -3,7 +3,7 @@ import csv
 import string
 
 
-g = Graph("http://localhost:7474/db/data/",auth=("neo4j", ""))
+g = Graph("http://localhost:11003/db/data/",auth=("neo4j", ""))
 
 #global variables, hopefully i find a better place for these :)
 
@@ -26,7 +26,9 @@ def makeEntry(rest, indentifier):
   if len(rest) == 0:
       return rest
   elif len(rest) == 1:
-      rest = {rest[0]: indentifier}
+      idenDict = {}
+      idenDict["id"] = indentifier
+      rest = {rest[0]: idenDict}
       return rest
   else:
       first_value = rest[0]
@@ -35,27 +37,48 @@ def makeEntry(rest, indentifier):
 
 
 def addBranch(restTree, subTree):
+    print("this is the restTree" + str(restTree))
+    print("this is the subTree " + str(subTree))
     global diseaseDict
     if subTree is None:
-        return  None
+        return restTree
     elif restTree is None:
         return subTree
     else:
+        #should only be one object at a time since this is the just created subtree
         for element in subTree:
+            if isinstance(element, dict):
+                for element2 in restTree:
+                    if element2 in element:
+                        restTree = {element: addBranch(restTree[element], subTree[element])}  
             if element in restTree:
-                print("found element *" + str(element) + "* in subTree")
-                #print(restTree[element])
-                print(subTree[element])
-                restTree = {element:addBranch(restTree[element], subTree[element])}
-                return restTree
-            else:
-                if isinstance(restTree, tuple):
-                    return tuple(subTree) + restTree
+                if isinstance(restTree[element], tuple):
+                    return restTree[element] + tuple({element:addBranch(restTree[element], subTree[element])})
                 else:
-                    return (subTree, restTree)
+                    restTree = {element:addBranch(restTree[element], subTree[element])}
+                    return restTree
+            else:
+                print("salute")
+                #print(tuple(restTree)+tuple(subTree))
+                return (restTree, subTree)
+                #if isinstance(restTree, tuple):
+                #    return tuple(subTree) + restTree
+                #else:
+                #    return (subTree, restTree)
+
+
+def expandTree(mainTree, branch):
+    for key, value in branch.items():
+        if key == "id":
+            mainTree["id"] = value
+            return
+        if key in mainTree:
+            expandTree(mainTree[key], branch[key])
+        else:
+            mainTree[key] = branch[key]
 
 def testing():
-    print("HERE WE GO")
+    mainTree = {}
     testList1 = ["lets", "test", "that"]
     testSubTree1 = (makeEntry(testList1, "1"))
     print(testSubTree1)
@@ -65,10 +88,17 @@ def testing():
     testList3 = ["lets", "test", "this"]
     testSubTree3 = (makeEntry(testList3, "3"))
     print(testSubTree3)
-    mainTree = addBranch(testSubTree1, testSubTree2)
-    print(mainTree)
-    #mainTree = addBranch(testSubTree3, mainTree)
-    #print(mainTree)
+    testList4 = ["lets", "test", "another","thing"]
+    testSubTree4 = (makeEntry(testList4, "4"))
+    print(testSubTree4)
+    expandTree(mainTree, testSubTree1)
+    print("MAINTREE", mainTree)
+    expandTree(mainTree, testSubTree2)
+    print("MAINTREE", mainTree)
+    expandTree(mainTree, testSubTree3)
+    print("MAINTREE", mainTree)
+    expandTree(mainTree, testSubTree4)
+    print("MAINTREE", mainTree)
 
 #right now i am not covering more than one identifier per node
 def appendToMainTree(mainTree, subTree):
@@ -148,8 +178,8 @@ def loadDiseases():
         identifier = result['identifier']
         synonyms = result['synonyms']
         if synonyms is None:
-            synonyms = name
-            synonymWords = name
+            synonyms = [name]
+            synonymWords = [name]
             namesAndSynonyms = name
         else:
             synonymWords = synonyms
@@ -165,10 +195,12 @@ def loadDiseases():
             element.lower()
             synonymWords = element.split()
             subTree = makeEntry(synonymWords, identifier)
-            if synonymWords[0] in diseaseDict:
-                diseaseDict[synonymWords[0]] = addBranch(diseaseDict, subTree)
-            else:
-                diseaseDict[synonymWords[0]] = subTree
+            if len(synonymWords) > 0:
+                if synonymWords[0] in diseaseDict:
+                    #diseaseDict[synonymWords[0]] = addBranch(diseaseDict, subTree)
+                    expandTree(diseaseDict, subTree)
+                else:
+                    diseaseDict[synonymWords[0]] = subTree
             #appendToMainTree(subTree)
             #findSimiliarity(subTree, diseaseDict)
             #if len(synonymWords) == 1:
@@ -224,7 +256,7 @@ def main():
     print(foundExact)
     print(foundSynonym)
     print("overwritten Entries : " + str(overwrittenEntries))
-    print(tabooDict)
+    print(diseaseDict)
     writeResults()
     testing()
 
