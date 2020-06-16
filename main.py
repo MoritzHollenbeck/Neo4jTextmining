@@ -21,6 +21,8 @@ matchFound = False
 foundExact = 0
 foundSynonym = 0
 overwrittenEntries = 0
+foundId = 0
+errorCount = 0
 
 def makeEntry(rest, indentifier):
   if len(rest) == 0:
@@ -67,6 +69,29 @@ def addBranch(restTree, subTree):
                 #    return (subTree, restTree)
 
 
+def findDisease(searchQuery, mainTree):
+    global foundId, errorCount
+    #global searchQuery
+    #print(searchQuery)
+    #print(mainTree)
+    if len(searchQuery) == 0 or searchQuery[0] not in mainTree:
+        return
+    elif "id" not in mainTree:
+        word = searchQuery[0]
+        try:
+            searchQuery.pop(0)
+        except AttributeError:
+            errorCount+=1
+            print("ERROR"+searchQuery)
+        if len(searchQuery) == 0:
+            return
+        return findDisease(searchQuery, mainTree[word])
+    else:
+        print("nice we found the following id: " + mainTree["id"])
+        foundId+=1
+        return mainTree["id"]
+
+
 def expandTree(mainTree, branch):
     for key, value in branch.items():
         if key == "id":
@@ -76,6 +101,15 @@ def expandTree(mainTree, branch):
             expandTree(mainTree[key], branch[key])
         else:
             mainTree[key] = branch[key]
+
+def searching(sentence, mainTree):
+    ids = []
+    wordCount = 0
+    for element in sentence:
+        query = sentence[wordCount:]
+        ids.append(findDisease(query, mainTree))
+        wordCount+=1
+    return ids
 
 def testing():
     mainTree = {}
@@ -99,6 +133,10 @@ def testing():
     print("MAINTREE", mainTree)
     expandTree(mainTree, testSubTree4)
     print("MAINTREE", mainTree)
+    testSentence1 = ["lets", "test", "this"]
+    testSentence2 = ["lets", "test", "this", "and"]
+    testSentence3 = ["lets","find"]
+    print(searching(testSentence1, mainTree))
 
 #right now i am not covering more than one identifier per node
 def appendToMainTree(mainTree, subTree):
@@ -161,7 +199,7 @@ def matchNames(word):
     return diseaseIden
 
 def buildResults(drugIdentifier, diseaseIdentifier, indication, diseaseName):
-    #print('appending a result to the matchlist')
+    print('appending a result to the matchlist')
     if (drugIdentifier, diseaseIdentifier, diseaseName, indication) not in matchList:
         matchList.append((drugIdentifier, diseaseIdentifier, diseaseName, indication))
     return 0
@@ -213,7 +251,8 @@ def loadDiseases():
 
 
 def loadDrugs():
-    query = 'MATCH (n:Compound) WHERE EXISTS(n.indication) RETURN n LIMIT 500'
+    global searchQuery
+    query = 'MATCH (n:Compound) WHERE EXISTS(n.indication) RETURN n'
     results = g.run(query)
 
     for result, in results:
@@ -221,15 +260,18 @@ def loadDrugs():
         name = result['name']
         identifier = result['identifier']
         indication = result['indication'].lower().translate(str.maketrans('', '', string.punctuation))
-
         splitIndication = indication.split()
         wordCount = 0
         for element in splitIndication:
             wordCount += 1
-            searchQuery = splitIndication[:wordCount]
+            searchQuery = splitIndication[wordCount:]
             #print('looking for word "' + element + '" in list of diseases')
-            diseaseIdentifier = matchNames(element)
+            #diseaseIdentifier = matchNames(element)
+            #print(searchQuery)
+            diseaseIdentifier = findDisease(searchQuery, diseaseDict)
+            print(diseaseIdentifier)
             if diseaseIdentifier is not None:
+                print("I AM IN HERE")
                 buildResults(identifier, diseaseIdentifier, indication, diseaseInden[diseaseIdentifier])
         if not matchFound:
             lonelyDrug.append((identifier, indication))
@@ -250,15 +292,16 @@ def writeResults():
 
 def main():
     loadDiseases()
-    #loadDrugs()
+    loadDrugs()
     # print(diseaseDict)
     # print(synonymDict)
     print(foundExact)
     print(foundSynonym)
     print("overwritten Entries : " + str(overwrittenEntries))
-    print(diseaseDict)
     writeResults()
     testing()
+    print(foundId)
+    print(errorCount)
 
 
 if __name__ == "__main__":
