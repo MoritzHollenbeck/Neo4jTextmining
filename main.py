@@ -39,8 +39,8 @@ def makeEntry(rest, indentifier):
 
 
 def addBranch(restTree, subTree):
-    print("this is the restTree" + str(restTree))
-    print("this is the subTree " + str(subTree))
+    #print("this is the restTree" + str(restTree))
+    #print("this is the subTree " + str(subTree))
     global diseaseDict
     if subTree is None:
         return restTree
@@ -71,9 +71,6 @@ def addBranch(restTree, subTree):
 
 def findDisease(searchQuery, mainTree):
     global foundId, errorCount
-    #global searchQuery
-    #print(searchQuery)
-    #print(mainTree)
     if len(searchQuery) == 0 or searchQuery[0] not in mainTree:
         return
     elif "id" not in mainTree:
@@ -85,9 +82,10 @@ def findDisease(searchQuery, mainTree):
             print("ERROR"+searchQuery)
         if len(searchQuery) == 0:
             return
+        #print("we found the word °" + word + "° in the tree")
         return findDisease(searchQuery, mainTree[word])
     else:
-        print("nice we found the following id: " + mainTree["id"])
+        #print("nice we found the following id: " + mainTree["id"])
         foundId+=1
         return mainTree["id"]
 
@@ -147,7 +145,7 @@ def appendToMainTree(mainTree, subTree):
         return subTree
     else:
         for subTreeElement in subTree:
-            print("iterating subTree elements")
+            #print("iterating subTree elements")
             if subTreeElement in mainTree:
                 print("found subTree in main Tree")
                 for element in mainTree:
@@ -194,15 +192,24 @@ def matchNames(word):
                 #else:
                     #tabooDict[word] = True
     if diseaseIden is not None:
-        print('AHA. found a match in the diseaseDict: found ' + str(word) + ' in disease ' + str(diseaseIden))
+        #print('AHA. found a match in the diseaseDict: found ' + str(word) + ' in disease ' + str(diseaseIden))
         matchFound = True
     return diseaseIden
 
 def buildResults(drugIdentifier, diseaseIdentifier, indication, diseaseName):
-    print('appending a result to the matchlist')
+    #print('appending a result to the matchlist')
     if (drugIdentifier, diseaseIdentifier, diseaseName, indication) not in matchList:
         matchList.append((drugIdentifier, diseaseIdentifier, diseaseName, indication))
     return 0
+
+
+def cleanSynonyms(synonyms):
+    removeList = []
+    cleanList = []
+    for element in synonyms:
+           if element != "EXACT" and element[0] != '[' and element != "Id" and element != "id" and element != "ID":
+            cleanList.append(element.lower())
+    return cleanList
 
 
 def loadDiseases():
@@ -216,29 +223,32 @@ def loadDiseases():
         identifier = result['identifier']
         synonyms = result['synonyms']
         if synonyms is None:
-            synonyms = [name]
+            if name is not None:
+                synonyms = [name.lower()]
+            else:
+                synonyms = [name]
             synonymWords = [name]
             namesAndSynonyms = name
         else:
             synonymWords = synonyms
             namesAndSynonyms = synonyms[:]
-            namesAndSynonyms.append(name)
+            if name is not None:
+                namesAndSynonyms.append(name.lower())
         diseaseInden[identifier] = namesAndSynonyms
-        # this is commented out, since its an old approach
-        #if synonyms is None:
-        #    diseaseDict[name.lower()] = identifier
-        #else:
-        #    diseaseDict[name.lower()] = identifier
         for element in synonyms:
-            element.lower()
             synonymWords = element.split()
+            synonymWords = cleanSynonyms(synonymWords)
             subTree = makeEntry(synonymWords, identifier)
+            #if identifier == "MONDO:0001657":
+            #    print(subTree)
+            #print(synonymWords)
+            #print(subTree)
             if len(synonymWords) > 0:
                 if synonymWords[0] in diseaseDict:
                     #diseaseDict[synonymWords[0]] = addBranch(diseaseDict, subTree)
                     expandTree(diseaseDict, subTree)
                 else:
-                    diseaseDict[synonymWords[0]] = subTree
+                    diseaseDict[synonymWords[0]] = subTree[synonymWords[0]]
             #appendToMainTree(subTree)
             #findSimiliarity(subTree, diseaseDict)
             #if len(synonymWords) == 1:
@@ -269,9 +279,8 @@ def loadDrugs():
             #diseaseIdentifier = matchNames(element)
             #print(searchQuery)
             diseaseIdentifier = findDisease(searchQuery, diseaseDict)
-            print(diseaseIdentifier)
+            #print(diseaseIdentifier)
             if diseaseIdentifier is not None:
-                print("I AM IN HERE")
                 buildResults(identifier, diseaseIdentifier, indication, diseaseInden[diseaseIdentifier])
         if not matchFound:
             lonelyDrug.append((identifier, indication))
@@ -293,13 +302,15 @@ def writeResults():
 def main():
     loadDiseases()
     loadDrugs()
-    # print(diseaseDict)
+    print(diseaseDict["brain"])
     # print(synonymDict)
     print(foundExact)
     print(foundSynonym)
     print("overwritten Entries : " + str(overwrittenEntries))
     writeResults()
-    testing()
+    #testing()
+    #print(findDisease(["Obesity"], diseaseDict))
+    #print(cleanSynonyms(["What", "is", "UP"]))
     print(foundId)
     print(errorCount)
 
