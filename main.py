@@ -38,36 +38,6 @@ def makeEntry(rest, indentifier):
       return rest
 
 
-def addBranch(restTree, subTree):
-    #print("this is the restTree" + str(restTree))
-    #print("this is the subTree " + str(subTree))
-    global diseaseDict
-    if subTree is None:
-        return restTree
-    elif restTree is None:
-        return subTree
-    else:
-        #should only be one object at a time since this is the just created subtree
-        for element in subTree:
-            if isinstance(element, dict):
-                for element2 in restTree:
-                    if element2 in element:
-                        restTree = {element: addBranch(restTree[element], subTree[element])}  
-            if element in restTree:
-                if isinstance(restTree[element], tuple):
-                    return restTree[element] + tuple({element:addBranch(restTree[element], subTree[element])})
-                else:
-                    restTree = {element:addBranch(restTree[element], subTree[element])}
-                    return restTree
-            else:
-                #print("salute")
-                #print(tuple(restTree)+tuple(subTree))
-                return (restTree, subTree)
-                #if isinstance(restTree, tuple):
-                #    return tuple(subTree) + restTree
-                #else:
-                #    return (subTree, restTree)
-
 
 def findDisease(searchQuery, mainTree):
     global foundId, errorCount
@@ -140,65 +110,9 @@ def testing():
     testSentence3 = ["lets","find"]
     print(searching(testSentence1, mainTree))
 
-#right now i am not covering more than one identifier per node
-def appendToMainTree(mainTree, subTree):
-    global diseaseDict
-    if subTree is None:
-        return None
-    if mainTree is None:
-        return subTree
-    else:
-        for subTreeElement in subTree:
-            #print("iterating subTree elements")
-            if subTreeElement in mainTree:
-                print("found subTree in main Tree")
-                for element in mainTree:
-                    if isinstance(element, dict):
-                        print("we found a dict")
-                        return appendToMainTree(element, subTreeElement)
-                    else:
-                        #TODO this right here is not very type save
-                         mainTree[subTreeElement] = (element, appendToMainTree(None, subTreeElement))
-                         break
-            else:
-                mainTree[subTreeElement] = subTree
-                return mainTree
-            
-
-def findSimiliarity(subTree, tree):
-  result = []
-  subTreeTemp = subTree.copy()
-  while tree is not None and len(subTreeTemp)>0:
-    tree = tree.get(subTreeTemp[0])
-    if tree is not None:
-      result.append(subTreeTemp[0])
-    subTreeTemp.pop(0)
-  return result
 
 
-def matchNames(word):
-    global foundExact, matchFound, foundSynonym
-    diseaseIden = None
-    if word in diseaseDict:
-        if isinstance(diseaseDict[word], str):
-            foundExact +=1
-            diseaseIden = diseaseDict[word]
-        elif isinstance(diseaseDict[word], int):
-            #print(searchQuery[0:diseaseDict[word]])
-            word = " ".join(searchQuery[0:diseaseDict[word]+1])
-            #word = set(searchQuery[0:diseaseDict[word]+1])
-            #for element in synonymDict:
-            #if word not in tabooDict:
-            if word in synonymDict:
-                    #if len(word.difference(set(element.split()))) <= len(element)-2:
-                diseaseIden = synonymDict[word]
-                foundSynonym +=1
-                #else:
-                    #tabooDict[word] = True
-    if diseaseIden is not None:
-        #print('AHA. found a match in the diseaseDict: found ' + str(word) + ' in disease ' + str(diseaseIden))
-        matchFound = True
-    return diseaseIden
+
 
 def buildResults(drugIdentifier, diseaseIdentifier, indication, diseaseName):
     #print('appending a result to the matchlist')
@@ -253,14 +167,6 @@ def loadDiseases():
                     expandTree(diseaseDict, subTree)
                 else:
                     diseaseDict[synonymWords[0]] = subTree[synonymWords[0]]
-            #appendToMainTree(subTree)
-            #findSimiliarity(subTree, diseaseDict)
-            #if len(synonymWords) == 1:
-            #    diseaseDict[synonymWords[0]] = identifier
-            #else:
-             #   diseaseDict[synonymWords[0]] = int(len(synonymWords))
-              #  synonymWords = " ".join(synonymWords)
-               # synonymDict[synonymWords] = identifier
 
 
 
