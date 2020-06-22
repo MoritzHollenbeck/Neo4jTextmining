@@ -60,7 +60,7 @@ def addBranch(restTree, subTree):
                     restTree = {element:addBranch(restTree[element], subTree[element])}
                     return restTree
             else:
-                print("salute")
+                #print("salute")
                 #print(tuple(restTree)+tuple(subTree))
                 return (restTree, subTree)
                 #if isinstance(restTree, tuple):
@@ -81,11 +81,15 @@ def findDisease(searchQuery, mainTree):
             errorCount+=1
             print("ERROR"+searchQuery)
         if len(searchQuery) == 0:
-            return
+           if "id" in mainTree[word]:
+               foundId += 1
+               matchFound = True
+               return mainTree[word]["id"]
         #print("we found the word °" + word + "° in the tree")
         return findDisease(searchQuery, mainTree[word])
     else:
         #print("nice we found the following id: " + mainTree["id"])
+        matchFound = True
         foundId+=1
         return mainTree["id"]
 
@@ -302,14 +306,15 @@ def writeResults():
 def main():
     loadDiseases()
     loadDrugs()
-    print(diseaseDict["brain"])
+    print(diseaseDict["brain"]["cancer"])
+    print(diseaseDict["cancer"]["id"])
     # print(synonymDict)
     print(foundExact)
     print(foundSynonym)
     print("overwritten Entries : " + str(overwrittenEntries))
     writeResults()
     #testing()
-    #print(findDisease(["Obesity"], diseaseDict))
+    print(findDisease(["Obesity"], diseaseDict))
     #print(cleanSynonyms(["What", "is", "UP"]))
     print(foundId)
     print(errorCount)
