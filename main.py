@@ -40,8 +40,14 @@ def makeEntry(rest, indentifier):
 
 
 def findDisease(searchQuery, mainTree):
-    global foundId, errorCount
-    if len(searchQuery) == 0 or searchQuery[0] not in mainTree:
+    global foundId, errorCount, matchFound
+    # soft tissue sarcoma in
+    if "id" in mainTree:
+        # print("nice we found the following id: " + mainTree["id"])
+        matchFound = True
+        foundId += 1
+        return mainTree["id"]
+    elif len(searchQuery) == 0 or searchQuery[0] not in mainTree:
         return
     elif "id" not in mainTree:
         word = searchQuery[0]
@@ -57,6 +63,7 @@ def findDisease(searchQuery, mainTree):
                return mainTree[word]["id"]
         #print("we found the word °" + word + "° in the tree")
         return findDisease(searchQuery, mainTree[word])
+    # I think this will fall a part
     else:
         #print("nice we found the following id: " + mainTree["id"])
         matchFound = True
@@ -153,7 +160,7 @@ def loadDiseases():
             if name is not None:
                 namesAndSynonyms.append(name.lower())
         diseaseInden[identifier] = namesAndSynonyms
-        for element in synonyms:
+        for element in namesAndSynonyms:
             synonymWords = element.split()
             synonymWords = cleanSynonyms(synonymWords)
             subTree = makeEntry(synonymWords, identifier)
@@ -171,7 +178,8 @@ def loadDiseases():
 
 
 def loadDrugs():
-    global searchQuery
+    global searchQuery, matchFound
+    # {identifier:"DB05374"}; {identifier:"DB05109"}
     query = 'MATCH (n:Compound) WHERE EXISTS(n.indication) RETURN n'
     results = g.run(query)
 
@@ -212,8 +220,8 @@ def writeResults():
 def main():
     loadDiseases()
     loadDrugs()
-    print(diseaseDict["brain"]["cancer"])
-    print(diseaseDict["cancer"]["id"])
+    print(diseaseDict["soft"]['tissue']['sarcoma'])
+    # print(diseaseDict["brain"])
     # print(synonymDict)
     print(foundExact)
     print(foundSynonym)
