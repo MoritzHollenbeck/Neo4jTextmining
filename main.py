@@ -23,6 +23,7 @@ foundSynonym = 0
 overwrittenEntries = 0
 foundId = 0
 errorCount = 0
+lastId = None
 
 def makeEntry(rest, indentifier):
   if len(rest) == 0:
@@ -40,15 +41,25 @@ def makeEntry(rest, indentifier):
 
 
 def findDisease(searchQuery, mainTree):
-    global foundId, errorCount, matchFound
+    global foundId, errorCount, matchFound, lastId
     # soft tissue sarcoma in
     if "id" in mainTree:
         # print("nice we found the following id: " + mainTree["id"])
         matchFound = True
         foundId += 1
-        return mainTree["id"]
+        lastId = mainTree["id"]
+        word = searchQuery[0]
+        if len(searchQuery) == 0:
+            return mainTree["id"]
+        if word in mainTree:
+            return findDisease(searchQuery, mainTree[word])
+        else:
+            return mainTree["id"]
     elif len(searchQuery) == 0 or searchQuery[0] not in mainTree:
-        return
+        if lastId is not None:
+            return lastId
+        else:
+            return
     elif "id" not in mainTree:
         word = searchQuery[0]
         try:
