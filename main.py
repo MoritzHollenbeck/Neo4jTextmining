@@ -3,7 +3,8 @@ import csv
 import string
 
 #database location may vary
-g = Graph("http://localhost:7474/db/data/", auth=("neo4j", "test"))
+g = Graph("http://localhost:11003/db/data/",auth=("neo4j", ""))
+# g = Graph("http://localhost:7474/db/data/", auth=("neo4j", "test"))
 
 
 
