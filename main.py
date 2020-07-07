@@ -3,7 +3,7 @@ import csv
 import string
 
 #database location may vary
-g = Graph("http://localhost:11003/db/data/",auth=("neo4j", ""))
+g = Graph("http://localhost:7474/db/data/", auth=("neo4j", "test"))
 
 
 
@@ -174,7 +174,7 @@ def loadDiseases():
         synonyms = result['synonyms']
         # some diseases have no synonyms
         if synonyms is None:
-            namesAndSynonyms = name
+            namesAndSynonyms = [name]
         else:
             synonymWords = synonyms
             namesAndSynonyms = synonyms[:]
@@ -242,9 +242,9 @@ def main():
     writeResults()
     #print(diseaseDict["insomnia"]["id"])
     #print(diseaseDict["respiratory"]["infection"]["id"])
-    print(diseaseDict["thrombosis"]["id"])
+    #print(diseaseDict["thrombosis"]["id"])
     #print[diseaseDict["cystic"]["fibrosis"]["id"]]
-    print(diseaseDict["hepatitis"]["id"])
+    #print(diseaseDict["hepatitis"]["id"])
 
     print(str(foundId)+" diseases were found in the database")
 
