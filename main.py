@@ -3,8 +3,8 @@ import csv
 import string
 
 #database location may vary
-g = Graph("http://localhost:11003/db/data/",auth=("neo4j", ""))
-# g = Graph("http://localhost:7474/db/data/", auth=("neo4j", "test"))
+# g = Graph("http://localhost:11003/db/data/",auth=("neo4j", ""))
+g = Graph("http://localhost:7474/db/data/", auth=("neo4j", "test"))
 
 
 
@@ -153,7 +153,7 @@ def testing():
 
 def buildResults(drugIdentifier, diseaseIdentifier, indication, diseaseName):
     if (drugIdentifier, diseaseIdentifier, diseaseName, indication) not in matchList:
-        matchList.append([drugIdentifier, diseaseIdentifier, diseaseName, indication])
+        matchList.append((drugIdentifier, diseaseIdentifier, diseaseName, indication))
     return 0
 
 #removing problematic elemts from a string
@@ -204,7 +204,7 @@ def loadDiseases():
 def loadDrugs():
     global searchQuery, matchFound, searchDepth, splitIndication, lastId
     #neo4j query to return all components for which an indication exists
-    query = 'MATCH (n:Compound) WHERE EXISTS(n.indication) RETURN n LIMIT 10'
+    query = 'MATCH (n:Compound) WHERE EXISTS(n.indication) RETURN n '
     results = g.run(query)
     #the depth in which the description of the drug is searched in the tree
     searchDepth = 0
@@ -235,13 +235,13 @@ def writeResults():
         nameWriter = csv.writer(csvfile, delimiter='\t',  quotechar='"', quoting=csv.QUOTE_MINIMAL)
         nameWriter.writerow(["DRUG IDENTIFIER","DISEASE IDENTIFIER", "DISEASE SYNONYMES","DRUG DESCRIPTION"])
         for element in matchList:
-            nameWriter.writerow(element)
+            nameWriter.writerow(list(element))
     #file for the drugs for which no match was found
     with open('lonelyDrugs.csv', 'w', newline='', encoding="utf-8") as csvfile:
         nameWriter = csv.writer(csvfile, delimiter='\t',  quotechar='"', quoting=csv.QUOTE_MINIMAL)
         nameWriter.writerow(["IDENTIFIER","DRUG DESCRIPTION"])
         for element in lonelyDrug:
-            nameWriter.writerow([element])
+            nameWriter.writerow(list(element))
 
 
 
