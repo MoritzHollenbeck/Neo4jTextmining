@@ -42,7 +42,7 @@ def makeEntry(rest, indentifier):
 
 #searchfunction given a query and the searchtree
 def findDisease(searchQuery, mainTree):
-    global foundId, errorCount, matchFound, lastId, searchDepth
+    global foundId, errorCount, matchFound, lastId, searchDepth, splitIndication
     #counting searchdepth
     searchDepth+=1
     #case if the current location contains matching id
@@ -66,12 +66,13 @@ def findDisease(searchQuery, mainTree):
     elif len(searchQuery) == 0 or searchQuery[0] not in mainTree:
         #last found id is returned
         if lastId is not None:
+            matchFound = True
             splitIndication[searchDepth:]
             return lastId
-        #sadly no id is returned
+        #sadly no id is returned / lonely Drug
         else:
             return
-    #id cannot bee found but the searchquery isnt empty
+    #id cannot be found but the searchquery isnt empty
     elif "id" not in mainTree:
         word = searchQuery[0]
         try:
@@ -79,7 +80,6 @@ def findDisease(searchQuery, mainTree):
             searchQuery.pop(0)
         except AttributeError:
             errorCount+=1
-            print("ERROR"+searchQuery)
         #check if query is empty now
         if len(searchQuery) == 0:
            # case if id is found
@@ -88,7 +88,7 @@ def findDisease(searchQuery, mainTree):
                foundId += 1
                matchFound = True
                return mainTree[word]["id"]
-        #recurse occurs if the maintree contains the latest element in the query
+        #recursion occurs if the maintree contains the latest element in the query
         return findDisease(searchQuery, mainTree[word])
     else:
         matchFound = True
@@ -158,11 +158,13 @@ def buildResults(drugIdentifier, diseaseIdentifier, indication, diseaseName):
 
 #removing problematic elemts from a string
 def cleanSynonyms(synonyms):
-    cleanList = []
+    cleanList = synonyms
     for element in synonyms:
-           if element != "EXACT" and element[0] != '[' and element != "Id" and element != "id" and element != "ID":
-            cleanList.append(element.lower())
+           if element == "EXACT" or element[0] == '[' or element == "Id" or element == "id" or element == "ID" or\
+            element == "AS EXACT []":
+            cleanList = ["THIS SYNONYM WAS DELETED"]
     return cleanList
+
 
 # the diseases are loaded with identifier. name and synonyms
 def loadDiseases():
@@ -175,7 +177,7 @@ def loadDiseases():
         synonyms = result['synonyms']
         # some diseases have no synonyms
         if synonyms is None:
-            namesAndSynonyms = [name]
+            namesAndSynonyms = name
         else:
             synonymWords = synonyms
             namesAndSynonyms = synonyms[:]
@@ -186,6 +188,8 @@ def loadDiseases():
             synonymWords = element.split()
             #remove certain elements for the synonyms
             synonymWords = cleanSynonyms(synonymWords)
+            #if identifier == 'MONDO:0004978':
+            #    print(synonymWords)
             #a simgular branch for the searchtree is made
             subTree = makeEntry(synonymWords, identifier)
             if len(synonymWords) > 0:
@@ -198,15 +202,17 @@ def loadDiseases():
 
 #the drugs with identifier, name and indication are loaded
 def loadDrugs():
-    global searchQuery, matchFound, searchDepth
+    global searchQuery, matchFound, searchDepth, splitIndication, lastId
     #neo4j query to return all components for which an indication exists
-    query = 'MATCH (n:Compound) WHERE EXISTS(n.indication) RETURN n'
+    query = 'MATCH (n:Compound) WHERE EXISTS(n.indication) RETURN n LIMIT 10'
     results = g.run(query)
     #the depth in which the description of the drug is searched in the tree
     searchDepth = 0
 
+
     for result, in results:
         matchFound = False
+        lastId = None
         name = result['name']
         identifier = result['identifier']
         #the indication is put in lowercase and the punctuation is altered
@@ -217,7 +223,7 @@ def loadDrugs():
             splitIndication.pop(0)
             diseaseIdentifier = findDisease(splitIndication, diseaseDict)
             #if a matching disease is found a result will be returned
-            if diseaseIdentifier is not None:
+            if matchFound:
                 buildResults(identifier, diseaseIdentifier, indication, diseaseInden[diseaseIdentifier])
         if not matchFound:
             lonelyDrug.append((identifier, indication))
@@ -227,11 +233,13 @@ def writeResults():
     #file for the results
     with open('finalList.csv', 'w', newline='', encoding="utf-8") as csvfile:
         nameWriter = csv.writer(csvfile, delimiter=' ',  quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        nameWriter.writerow(["DRUG IDENTIFIER","DISEASE IDENTIFIER", "DISEASE SYNONYMES","DRUG DESCRIPTION"])
         for element in matchList:
             nameWriter.writerow([element])
     #file for the drugs for which no match was found
     with open('lonelyDrugs.csv', 'w', newline='', encoding="utf-8") as csvfile:
         nameWriter = csv.writer(csvfile, delimiter=' ',  quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        nameWriter.writerow(["IDENTIFIER","DRUG DESCRIPTION"])
         for element in lonelyDrug:
             nameWriter.writerow([element])
 
@@ -241,11 +249,14 @@ def main():
     loadDiseases()
     loadDrugs()
     writeResults()
+    print(lonelyDrug)
     #print(diseaseDict["insomnia"]["id"])
     #print(diseaseDict["respiratory"]["infection"]["id"])
-    #print(diseaseDict["thrombosis"]["id"])
+    #print(diseaseDict)
+    print(diseaseDict["thrombosis"]["id"])
     #print[diseaseDict["cystic"]["fibrosis"]["id"]]
-    #print(diseaseDict["hepatitis"]["id"])
+    print(diseaseDict["hepatitis"]["id"])
+    print(diseaseDict["osteoporosis"]["id"])
 
     print(str(foundId)+" diseases were found in the database")
 
