@@ -153,7 +153,7 @@ def testing():
 
 def buildResults(drugIdentifier, diseaseIdentifier, indication, diseaseName):
     if (drugIdentifier, diseaseIdentifier, diseaseName, indication) not in matchList:
-        matchList.append((drugIdentifier, diseaseIdentifier, diseaseName, indication))
+        matchList.append([drugIdentifier, diseaseIdentifier, diseaseName, indication])
     return 0
 
 #removing problematic elemts from a string
@@ -232,13 +232,13 @@ def loadDrugs():
 def writeResults():
     #file for the results
     with open('finalList.csv', 'w', newline='', encoding="utf-8") as csvfile:
-        nameWriter = csv.writer(csvfile, delimiter=' ',  quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        nameWriter = csv.writer(csvfile, delimiter='\t',  quotechar='"', quoting=csv.QUOTE_MINIMAL)
         nameWriter.writerow(["DRUG IDENTIFIER","DISEASE IDENTIFIER", "DISEASE SYNONYMES","DRUG DESCRIPTION"])
         for element in matchList:
-            nameWriter.writerow([element])
+            nameWriter.writerow(element)
     #file for the drugs for which no match was found
     with open('lonelyDrugs.csv', 'w', newline='', encoding="utf-8") as csvfile:
-        nameWriter = csv.writer(csvfile, delimiter=' ',  quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        nameWriter = csv.writer(csvfile, delimiter='\t',  quotechar='"', quoting=csv.QUOTE_MINIMAL)
         nameWriter.writerow(["IDENTIFIER","DRUG DESCRIPTION"])
         for element in lonelyDrug:
             nameWriter.writerow([element])
@@ -250,13 +250,15 @@ def main():
     loadDrugs()
     writeResults()
     print(lonelyDrug)
+
+    print(diseaseDict["asthma"]["id"])
     #print(diseaseDict["insomnia"]["id"])
     #print(diseaseDict["respiratory"]["infection"]["id"])
     #print(diseaseDict)
-    print(diseaseDict["thrombosis"]["id"])
+    # print(diseaseDict["thrombosis"]["id"])
     #print[diseaseDict["cystic"]["fibrosis"]["id"]]
-    print(diseaseDict["hepatitis"]["id"])
-    print(diseaseDict["osteoporosis"]["id"])
+    # print(diseaseDict["hepatitis"]["id"])
+    # print(diseaseDict["osteoporosis"]["id"])
 
     print(str(foundId)+" diseases were found in the database")
 
