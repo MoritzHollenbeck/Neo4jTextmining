@@ -1,6 +1,7 @@
 from py2neo import Graph
 import csv
 import string
+import copy
 
 #database location may vary
 g = Graph("http://localhost:11003/db/data/",auth=("neo4j", ""))
@@ -20,7 +21,6 @@ foundId = 0
 errorCount = 0
 lastId = None
 searchDepth = 0
-splitIndication = []
 
 #function in which a branch is made from a synonym
 def makeEntry(rest, indentifier):
@@ -42,7 +42,7 @@ def makeEntry(rest, indentifier):
 
 #searchfunction given a query and the searchtree
 def findDisease(searchQuery, mainTree):
-    global foundId, errorCount, matchFound, lastId, searchDepth, splitIndication
+    global foundId, errorCount, matchFound, lastId, searchDepth
     #counting searchdepth
     searchDepth+=1
     #case if the current location contains matching id
@@ -174,6 +174,8 @@ def loadDiseases():
     for result, in results:
         name = result['name']
         identifier = result['identifier']
+        if identifier == "MONDO:0000001":
+            break
         synonyms = result['synonyms']
         # some diseases have no synonyms
         if synonyms is None:
@@ -191,6 +193,8 @@ def loadDiseases():
             #if identifier == 'MONDO:0004978':
             #    print(synonymWords)
             #a simgular branch for the searchtree is made
+            if identifier == "MONDO:0007254":
+                print(synonymWords)
             subTree = makeEntry(synonymWords, identifier)
             if len(synonymWords) > 0:
                 if synonymWords[0] in diseaseDict:
@@ -204,7 +208,7 @@ def loadDiseases():
 def loadDrugs():
     global searchQuery, matchFound, searchDepth, splitIndication, lastId
     #neo4j query to return all components for which an indication exists
-    query = 'MATCH (n:Compound) WHERE EXISTS(n.indication) RETURN n LIMIT 10'
+    query = 'MATCH (n:Compound) WHERE EXISTS(n.indication) RETURN n'
     results = g.run(query)
     #the depth in which the description of the drug is searched in the tree
     searchDepth = 0
@@ -218,12 +222,16 @@ def loadDrugs():
         #the indication is put in lowercase and the punctuation is altered
         indication = result['indication'].lower().translate(str.maketrans('', '', string.punctuation))
         splitIndication = indication.split()
+        if identifier == "DB05867":
+            print(splitIndication)
         #as long as there are elemnts in the indication the search continues
         while len(splitIndication)>0:
             splitIndication.pop(0)
-            diseaseIdentifier = findDisease(splitIndication, diseaseDict)
+            searchList = copy.deepcopy(splitIndication)
+            diseaseIdentifier = findDisease(searchList, diseaseDict)
             #if a matching disease is found a result will be returned
-            if matchFound:
+            keyExists = diseaseInden.get(diseaseIdentifier)
+            if matchFound and keyExists:
                 buildResults(identifier, diseaseIdentifier, indication, diseaseInden[diseaseIdentifier])
         if not matchFound:
             lonelyDrug.append((identifier, indication))
@@ -249,14 +257,14 @@ def main():
     loadDiseases()
     loadDrugs()
     writeResults()
-    print(lonelyDrug)
+    #print(lonelyDrug)
     #print(diseaseDict["insomnia"]["id"])
     #print(diseaseDict["respiratory"]["infection"]["id"])
     #print(diseaseDict)
-    print(diseaseDict["thrombosis"]["id"])
+    #print(diseaseDict["thrombosis"]["id"])
     #print[diseaseDict["cystic"]["fibrosis"]["id"]]
-    print(diseaseDict["hepatitis"]["id"])
-    print(diseaseDict["osteoporosis"]["id"])
+    #print(diseaseDict["hepatitis"]["id"])
+    #print(diseaseDict["osteoporosis"]["id"])
 
     print(str(foundId)+" diseases were found in the database")
 
