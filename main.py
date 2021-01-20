@@ -4,8 +4,8 @@ import string
 import copy
 
 #database location may vary
-g = Graph("http://localhost:11003/db/data/",auth=("neo4j", ""))
-# g = Graph("http://localhost:7474/db/data/", auth=("neo4j", "test"))
+# g = Graph("http://localhost:11003/db/data/",auth=("neo4j", ""))
+g = Graph("http://localhost:7474/db/data/", auth=("neo4j", "test"))
 
 
 
@@ -193,8 +193,6 @@ def loadDiseases():
             #if identifier == 'MONDO:0004978':
             #    print(synonymWords)
             #a simgular branch for the searchtree is made
-            if identifier == "MONDO:0007254":
-                print(synonymWords)
             subTree = makeEntry(synonymWords, identifier)
             if len(synonymWords) > 0:
                 if synonymWords[0] in diseaseDict:
@@ -208,7 +206,7 @@ def loadDiseases():
 def loadDrugs():
     global searchQuery, matchFound, searchDepth, splitIndication, lastId
     #neo4j query to return all components for which an indication exists
-    query = 'MATCH (n:Compound) WHERE EXISTS(n.indication) RETURN n'
+    query = 'MATCH (n:Compound) WHERE EXISTS(n.indication) RETURN n LIMIT 10'
     results = g.run(query)
     #the depth in which the description of the drug is searched in the tree
     searchDepth = 0
@@ -222,8 +220,6 @@ def loadDrugs():
         #the indication is put in lowercase and the punctuation is altered
         indication = result['indication'].lower().translate(str.maketrans('', '', string.punctuation))
         splitIndication = indication.split()
-        if identifier == "DB05867":
-            print(splitIndication)
         #as long as there are elemnts in the indication the search continues
         while len(splitIndication)>0:
             splitIndication.pop(0)
@@ -240,16 +236,16 @@ def loadDrugs():
 def writeResults():
     #file for the results
     with open('finalList.csv', 'w', newline='', encoding="utf-8") as csvfile:
-        nameWriter = csv.writer(csvfile, delimiter=' ',  quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        nameWriter = csv.writer(csvfile, delimiter='\t',  quotechar='"', quoting=csv.QUOTE_MINIMAL)
         nameWriter.writerow(["DRUG IDENTIFIER","DISEASE IDENTIFIER", "DISEASE SYNONYMES","DRUG DESCRIPTION"])
         for element in matchList:
-            nameWriter.writerow([element])
+            nameWriter.writerow(list(element))
     #file for the drugs for which no match was found
     with open('lonelyDrugs.csv', 'w', newline='', encoding="utf-8") as csvfile:
-        nameWriter = csv.writer(csvfile, delimiter=' ',  quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        nameWriter = csv.writer(csvfile, delimiter='\t',  quotechar='"', quoting=csv.QUOTE_MINIMAL)
         nameWriter.writerow(["IDENTIFIER","DRUG DESCRIPTION"])
         for element in lonelyDrug:
-            nameWriter.writerow([element])
+            nameWriter.writerow(list(element))
 
 
 
@@ -257,14 +253,16 @@ def main():
     loadDiseases()
     loadDrugs()
     writeResults()
-    #print(lonelyDrug)
+    print(lonelyDrug)
+
+    print(diseaseDict["asthma"]["id"])
     #print(diseaseDict["insomnia"]["id"])
     #print(diseaseDict["respiratory"]["infection"]["id"])
     #print(diseaseDict)
-    #print(diseaseDict["thrombosis"]["id"])
+    # print(diseaseDict["thrombosis"]["id"])
     #print[diseaseDict["cystic"]["fibrosis"]["id"]]
-    #print(diseaseDict["hepatitis"]["id"])
-    #print(diseaseDict["osteoporosis"]["id"])
+    # print(diseaseDict["hepatitis"]["id"])
+    # print(diseaseDict["osteoporosis"]["id"])
 
     print(str(foundId)+" diseases were found in the database")
 
