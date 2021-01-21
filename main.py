@@ -168,21 +168,20 @@ def cleanSynonyms(synonyms):
 
 # the diseases are loaded with identifier. name and synonyms
 def loadDiseases():
-    query = 'MATCH (n:Disease) RETURN n'
+    query = 'MATCH (n:Disease) RETURN n.identifier, n.name, n.synonyms '
     results = g.run(query)
 
-    for result, in results:
-        name = result['name']
-        identifier = result['identifier']
-        if identifier == "MONDO:0000001":
-            break
-        synonyms = result['synonyms']
+    counter=0
+    for identifier, name, synonyms, in results:
+        counter+=1
+        if identifier=="MONDO:0005154":
+            print('huhu')
         # some diseases have no synonyms
         if synonyms is None:
             namesAndSynonyms = name
         else:
             synonymWords = synonyms
-            namesAndSynonyms = synonyms[:]
+            namesAndSynonyms = [x.rsplit(' [')[0] for x in synonyms]
             if name is not None:
                 namesAndSynonyms.append(name.lower())
         diseaseInden[identifier] = namesAndSynonyms
@@ -200,19 +199,21 @@ def loadDiseases():
                     expandTree(diseaseDict, subTree)
                 else:
                     diseaseDict[synonymWords[0]] = subTree[synonymWords[0]]
+    print(counter)
 
 
 #the drugs with identifier, name and indication are loaded
 def loadDrugs():
     global searchQuery, matchFound, searchDepth, splitIndication, lastId
     #neo4j query to return all components for which an indication exists
-    query = 'MATCH (n:Compound) WHERE EXISTS(n.indication) RETURN n LIMIT 10'
+    query = 'MATCH (n:Compound) WHERE EXISTS(n.indication) RETURN n'
     results = g.run(query)
     #the depth in which the description of the drug is searched in the tree
     searchDepth = 0
 
-
+    count=0
     for result, in results:
+        count+=1
         matchFound = False
         lastId = None
         name = result['name']
@@ -231,6 +232,7 @@ def loadDrugs():
                 buildResults(identifier, diseaseIdentifier, indication, diseaseInden[diseaseIdentifier])
         if not matchFound:
             lonelyDrug.append((identifier, indication))
+    print(count)
 
 
 def writeResults():
