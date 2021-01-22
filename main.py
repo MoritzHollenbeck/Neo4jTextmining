@@ -4,8 +4,8 @@ import string
 import copy
 
 #database location may vary
-# g = Graph("http://localhost:11003/db/data/",auth=("neo4j", ""))
-g = Graph("http://localhost:7474/db/data/", auth=("neo4j", "test"))
+g = Graph("http://localhost:11003/db/data/",auth=("neo4j", ""))
+#g = Graph("http://localhost:7474/db/data/", auth=("neo4j", "test"))
 
 
 
@@ -21,6 +21,7 @@ foundId = 0
 errorCount = 0
 lastId = None
 searchDepth = 0
+lastDepth = 0
 
 
 #function in which a branch is made from a synonym
@@ -43,7 +44,7 @@ def makeEntry(rest, indentifier):
 
 #searchfunction given a query and the searchtree
 def findDisease(searchQuery, mainTree):
-    global foundId, errorCount, matchFound, lastId, searchDepth
+    global foundId, errorCount, matchFound, lastId, searchDepth, lastDepth
     #counting searchdepth
     searchDepth+=1
     #case if the current location contains matching id
@@ -51,6 +52,7 @@ def findDisease(searchQuery, mainTree):
         matchFound = True
         foundId += 1
         lastId = mainTree["id"]
+        lastDepth = copy.deepcopy(searchDepth)
         word = searchQuery[0]
         #termination with current id
         if len(searchQuery) == 0:
@@ -66,6 +68,7 @@ def findDisease(searchQuery, mainTree):
         #last found id is returned
         if lastId is not None:
             matchFound = True
+            searchDepth = lastDepth
             return lastId
         #sadly no id is returned / lonely Drug
         else:
