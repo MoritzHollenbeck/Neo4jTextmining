@@ -4,8 +4,8 @@ import string
 import copy
 
 #database location may vary
-g = Graph("http://localhost:11003/db/data/",auth=("neo4j", ""))
-#g = Graph("http://localhost:7474/db/data/", auth=("neo4j", "test"))
+# g = Graph("http://localhost:11003/db/data/",auth=("neo4j", ""))
+g = Graph("http://localhost:7474/db/data/", auth=("neo4j", "test"))
 
 
 
@@ -54,21 +54,18 @@ def findDisease(searchQuery, mainTree):
         word = searchQuery[0]
         #termination with current id
         if len(searchQuery) == 0:
-            splitIndication[searchDepth:]
             return mainTree["id"]
         #continue searching for longer match
         if word in mainTree:
             return findDisease(searchQuery, mainTree[word])
         #no other match can be found so current id is returned
         else:
-            splitIndication[searchDepth:]
             return mainTree["id"]
     #no more mach can be found or the query is empty
     elif len(searchQuery) == 0 or searchQuery[0] not in mainTree:
         #last found id is returned
         if lastId is not None:
             matchFound = True
-            splitIndication[searchDepth:]
             return lastId
         #sadly no id is returned / lonely Drug
         else:
@@ -85,7 +82,6 @@ def findDisease(searchQuery, mainTree):
         if len(searchQuery) == 0:
            # case if id is found
            if "id" in mainTree[word]:
-               splitIndication[searchDepth:]
                foundId += 1
                matchFound = True
                return mainTree[word]["id"]
@@ -205,8 +201,8 @@ def loadDiseases():
 
 #the drugs with identifier, name and indication are loaded
 def loadDrugs():
-    global searchQuery, matchFound, searchDepth, splitIndication, lastId
-    #neo4j query to return all components for which an indication exists
+    global searchQuery, matchFound, searchDepth, lastId
+    #neo4j query to return all components for which an indication exists {identifier:"DB03496"}
     query = 'MATCH (n:Compound) WHERE EXISTS(n.indication) RETURN n'
     results = g.run(query)
     #the depth in which the description of the drug is searched in the tree
@@ -222,15 +218,17 @@ def loadDrugs():
         #the indication is put in lowercase and the punctuation is altered
         indication = result['indication'].lower().translate(str.maketrans('', '', string.punctuation))
         splitIndication = indication.split()
+
         #as long as there are elemnts in the indication the search continues
         while len(splitIndication)>0:
             splitIndication.pop(0)
             searchList = copy.deepcopy(splitIndication)
+            searchDepth=0
             diseaseIdentifier = findDisease(searchList, diseaseDict)
             #if a matching disease is found a result will be returned
             keyExists = diseaseInden.get(diseaseIdentifier)
             if matchFound and keyExists:
-                splitIndication = splitIndication[searchDepth:]
+                splitIndication = splitIndication[searchDepth-1:]
                 buildResults(identifier, diseaseIdentifier, indication, diseaseInden[diseaseIdentifier])
         if not matchFound:
             lonelyDrug.append((identifier, indication))
