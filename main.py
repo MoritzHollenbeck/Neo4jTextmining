@@ -220,7 +220,7 @@ def loadDrugs():
         splitIndication = indication.split()
 
         #as long as there are elemnts in the indication the search continues
-        while len(splitIndication)>0:
+        while len(splitIndication)>1:
             splitIndication.pop(0)
             searchList = copy.deepcopy(splitIndication)
             searchDepth=0
@@ -228,7 +228,8 @@ def loadDrugs():
             #if a matching disease is found a result will be returned
             keyExists = diseaseInden.get(diseaseIdentifier)
             if matchFound and keyExists:
-                splitIndication = splitIndication[searchDepth-1:]
+                # search -2 because of add direct for searchDepth (+1) and also every round a pop is done
+                splitIndication = splitIndication[searchDepth-2:] if searchDepth>=2 else splitIndication
                 buildResults(identifier, diseaseIdentifier, indication, diseaseInden[diseaseIdentifier])
         if not matchFound:
             lonelyDrug.append((identifier, indication))
