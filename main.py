@@ -4,8 +4,8 @@ import string
 import copy
 
 #database location may vary
-# g = Graph("http://localhost:11003/db/data/",auth=("neo4j", ""))
-g = Graph("http://localhost:7474/db/data/", auth=("neo4j", "test"))
+g = Graph("http://localhost:11003/db/data/",auth=("neo4j", ""))
+#g = Graph("http://localhost:7474/db/data/", auth=("neo4j", "test"))
 
 
 
@@ -21,6 +21,7 @@ foundId = 0
 errorCount = 0
 lastId = None
 searchDepth = 0
+
 
 #function in which a branch is made from a synonym
 def makeEntry(rest, indentifier):
@@ -229,6 +230,7 @@ def loadDrugs():
             #if a matching disease is found a result will be returned
             keyExists = diseaseInden.get(diseaseIdentifier)
             if matchFound and keyExists:
+                splitIndication = splitIndication[searchDepth:]
                 buildResults(identifier, diseaseIdentifier, indication, diseaseInden[diseaseIdentifier])
         if not matchFound:
             lonelyDrug.append((identifier, indication))
