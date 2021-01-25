@@ -4,8 +4,8 @@ import string
 import copy
 
 #database location may vary
-g = Graph("http://localhost:11003/db/data/",auth=("neo4j", ""))
-#g = Graph("http://localhost:7474/db/data/", auth=("neo4j", "test"))
+# g = Graph("http://localhost:11003/db/data/",auth=("neo4j", ""))
+g = Graph("http://localhost:7474/db/data/", auth=("neo4j", "test"))
 
 
 
@@ -87,6 +87,7 @@ def findDisease(searchQuery, mainTree):
            if "id" in mainTree[word]:
                foundId += 1
                matchFound = True
+               searchDepth+=1
                return mainTree[word]["id"]
         #recursion occurs if the maintree contains the latest element in the query
         return findDisease(searchQuery, mainTree[word])
@@ -174,11 +175,11 @@ def loadDiseases():
     counter=0
     for identifier, name, synonyms, in results:
         counter+=1
-        if identifier=="MONDO:0005154":
+        if identifier=="MONDO:0007934":
             print('huhu')
         # some diseases have no synonyms
         if synonyms is None:
-            namesAndSynonyms = name
+            namesAndSynonyms = [name]
         else:
             synonymWords = synonyms
             namesAndSynonyms = [x.rsplit(' [')[0] for x in synonyms]
@@ -205,7 +206,7 @@ def loadDiseases():
 #the drugs with identifier, name and indication are loaded
 def loadDrugs():
     global searchQuery, matchFound, searchDepth, lastId
-    #neo4j query to return all components for which an indication exists {identifier:"DB03496"}
+    #neo4j query to return all components for which an indication exists {identifier:"DB03496"} DB00554
     query = 'MATCH (n:Compound) WHERE EXISTS(n.indication) RETURN n'
     results = g.run(query)
     #the depth in which the description of the drug is searched in the tree
@@ -224,6 +225,7 @@ def loadDrugs():
 
         #as long as there are elemnts in the indication the search continues
         while len(splitIndication)>1:
+            lastId=None
             splitIndication.pop(0)
             searchList = copy.deepcopy(splitIndication)
             searchDepth=0
