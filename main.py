@@ -4,8 +4,8 @@ import string
 import copy
 
 #database location may vary
-# g = Graph("http://localhost:11003/db/data/",auth=("neo4j", ""))
-g = Graph("http://localhost:7474/db/data/", auth=("neo4j", "test"))
+g = Graph("http://localhost:11003/db/data/",auth=("neo4j", ""))
+#g = Graph("http://localhost:7474/db/data/", auth=("neo4j", "test"))
 
 
 
@@ -161,7 +161,8 @@ def buildResults(drugIdentifier, diseaseIdentifier, indication, diseaseName):
 def cleanSynonyms(synonyms):
     cleanList = synonyms
     for element in synonyms:
-           if element == "EXACT" or element[0] == '[' or element == "Id" or element == "id" or element == "ID" or\
+        element = element.translate(str.maketrans('-', ' '))
+        if element == "EXACT" or element[0] == '[' or element == "Id" or element == "id" or element == "ID" or\
             element == "AS EXACT []":
             cleanList = ["THIS SYNONYM WAS DELETED"]
     return cleanList
@@ -220,7 +221,8 @@ def loadDrugs():
         name = result['name']
         identifier = result['identifier']
         #the indication is put in lowercase and the punctuation is altered
-        indication = result['indication'].lower().translate(str.maketrans('', '', string.punctuation))
+        indication = result['indication'].lower().translate(str.maketrans('-', ' '))
+        indication = indication.translate(str.maketrans('', '', string.punctuation))
         splitIndication = indication.split()
 
         #as long as there are elemnts in the indication the search continues
