@@ -4,8 +4,8 @@ import string
 import copy
 
 #database location may vary
-g = Graph("http://localhost:11003/db/data/",auth=("neo4j", ""))
-#g = Graph("http://localhost:7474/db/data/", auth=("neo4j", "test"))
+# g = Graph("http://localhost:11003/db/data/",auth=("neo4j", ""))
+g = Graph("http://localhost:7474/db/data/", auth=("neo4j", "test"))
 
 
 
@@ -221,7 +221,7 @@ def loadDrugs():
         name = result['name']
         identifier = result['identifier']
         #the indication is put in lowercase and the punctuation is altered
-        indication = result['indication'].lower().translate(str.maketrans('-', ' '))
+        indication = result['indication'].lower().replace('/',' ').translate(str.maketrans('-', ' '))
         indication = indication.translate(str.maketrans('', '', string.punctuation))
         splitIndication = indication.split()
 
@@ -263,7 +263,7 @@ def main():
     loadDiseases()
     loadDrugs()
     writeResults()
-    print(lonelyDrug)
+    # print(lonelyDrug)
 
     print(diseaseDict["asthma"]["id"])
     #print(diseaseDict["insomnia"]["id"])
